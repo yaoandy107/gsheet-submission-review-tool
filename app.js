@@ -47,8 +47,16 @@ function tableTo2DArray(table)
 function parseSubmitFormData(contentDOM)
 {
   return tableTo2DArray(contentDOM.querySelector('table'))
-    .slice(CONFIG.skipRows)
-    .map(row => arrayToObject(CONFIG.fields.map(f => f && f.name), row));
+    .slice(CONFIG.skipRows);
+}
+
+function parseSubmitFormTitle(contentDOM)
+{
+  titles = toArray(contentDOM.querySelector('table')
+      .querySelectorAll('tr')[1]
+      .querySelectorAll('td'))
+    .map(td => td.textContent)
+  return titles
 }
 
 var vm;
@@ -86,7 +94,8 @@ function runApp()
     template: '#t',
     data: function () {
       return {
-        db: [],
+        formDatas: [],
+        formTitles: [],
         fields: CONFIG.fields,
         state: 'NOFILE'
       }
@@ -95,7 +104,8 @@ function runApp()
       if(CONFIG.dataFileName) {
         this.state = 'LOADING';
         load(CONFIG.dataFileName).then(doc => {
-          this.db = parseSubmitFormData(doc);
+          this.formTitles = parseSubmitFormTitle(doc);
+          this.formDatas = parseSubmitFormData(doc);
         }).catch(() => { this.state = 'ERROR'; });
       }
     },
@@ -120,7 +130,11 @@ document.addEventListener('drop', e => { e.stopPropagation(); e.preventDefault()
   reader.addEventListener('loadend', e => {
     if(reader.readyState === FileReader.DONE) {
       if(vm) {
-        vm.db = parseSubmitFormData(parseHTML(reader.result));
+        
+        vm.formTitles = parseSubmitFormTitle(parseHTML(reader.result));
+        vm.formDatas = parseSubmitFormData(parseHTML(reader.result));
+        console.log(vm.formTitles)
+        console.log(vm.formDatas)
       }
     }
   });
